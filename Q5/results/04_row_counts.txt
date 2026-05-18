@@ -1,0 +1,11 @@
+ table_name  | row_count 
+-------------+-----------
+ users       |        10
+ products    |        10
+ carts       |        10
+ cart_items  |        11
+ orders      |        10
+ order_items |        12
+ payments    |        10
+(7 rows)
+
