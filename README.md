@@ -98,3 +98,4 @@ psql -v ON_ERROR_STOP=1 -d q5_shopping -f queries.sql > results/03_queries_outpu
 - PostgreSQL 기준으로 작성되었습니다.
 - `updated_at`은 트리거 없이 관리하도록 설계했기 때문에, 데이터 수정 시 `updated_at = CURRENT_TIMESTAMP`를 함께 갱신합니다.
 - 과제 제약에 맞춰 View/Procedure/Trigger는 사용하지 않았습니다.
+- Diagram: https://www.erdcloud.com/d/nPowgd5cfKcpjoBwB
