@@ -1,0 +1,12 @@
+2026-06-27 21:16:22,105 INFO CALL cmd_category_list args=(Namespace(data_dir='/tmp/smoke-test', command='category', category_command='list'), <budget_app.cli.Context object at 0x107fb7a50>) kwargs={}
+2026-06-27 21:16:22,105 INFO cmd_category_list took 0.0007s
+2026-06-27 21:16:22,105 INFO DONE cmd_category_list -> exit=0
+2026-06-27 21:16:22,223 INFO CALL cmd_budget_set args=(Namespace(data_dir='/tmp/smoke-test', command='budget', budget_command='set', month='2024-01', amount=500000), <budget_app.cli.Context object at 0x109d82210>) kwargs={}
+2026-06-27 21:16:22,224 INFO cmd_budget_set took 0.0005s
+2026-06-27 21:16:22,224 INFO DONE cmd_budget_set -> exit=0
+2026-06-27 21:16:22,341 INFO CALL cmd_add args=(Namespace(data_dir='/tmp/smoke-test', command='add'), <budget_app.cli.Context object at 0x10993e210>) kwargs={}
+2026-06-27 21:16:22,341 INFO cmd_add took 0.0007s
+2026-06-27 21:16:22,341 INFO DONE cmd_add -> exit=0
+2026-06-27 21:16:22,456 INFO CALL cmd_summary args=(Namespace(data_dir='/tmp/smoke-test', command='summary', month='2024-01', top=3), <budget_app.cli.Context object at 0x1053702d0>) kwargs={}
+2026-06-27 21:16:22,458 INFO cmd_summary took 0.0015s
+2026-06-27 21:16:22,458 INFO DONE cmd_summary -> exit=0
