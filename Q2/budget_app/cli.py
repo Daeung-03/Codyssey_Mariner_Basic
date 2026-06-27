@@ -173,6 +173,8 @@ CSV_FIELDS = ["date", "type", "category", "amount", "memo", "tags"]
 def cmd_import(args: argparse.Namespace, ctx: Context) -> int:
     imported = 0
     skipped = 0
+    # _next_id() 파일 전체 스캔을 루프 밖으로 한 번만 수행
+    seq = int(ctx.transaction_service._next_id().split("-")[1])
     with open(args.csv_from, encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -181,7 +183,9 @@ def cmd_import(args: argparse.Namespace, ctx: Context) -> int:
                 ctx.transaction_service.add(
                     date=row["date"], type=row["type"], category=row["category"],
                     amount=int(row["amount"]), memo=(row.get("memo") or None), tags=tags,
+                    _id=f"TX-{seq:06d}",
                 )
+                seq += 1
                 imported += 1
             except (ValidationError, KeyError, ValueError):
                 skipped += 1

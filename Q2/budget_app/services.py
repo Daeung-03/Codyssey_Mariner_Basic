@@ -132,10 +132,12 @@ class TransactionService:
         amount: int,
         memo: str | None = None,
         tags: list[str] | None = None,
+        _id: str | None = None,
     ) -> Transaction:
         self._validate_fields(date, type, category, amount)
         transaction = Transaction(
-            id=self._next_id(), type=type, date=date, amount=amount,
+            id=_id if _id is not None else self._next_id(),
+            type=type, date=date, amount=amount,
             category=category, memo=memo, tags=tags or [],
         )
         self.repo.append(transaction)
@@ -209,16 +211,22 @@ class TransactionService:
         return rows
 
     def summary(self, month: str, top: int = 3) -> dict:
-        rows = [t for t in self.repo.iter_transactions() if t.date.startswith(month)]
-        total_income = sum(t.amount for t in rows if t.type == "income")
-        total_expense = sum(t.amount for t in rows if t.type == "expense")
+        has_data = False
+        total_income = 0
+        total_expense = 0
         by_category: dict[str, int] = {}
-        for t in rows:
-            if t.type == "expense":
+        for t in self.repo.iter_transactions():
+            if not t.date.startswith(month):
+                continue
+            has_data = True
+            if t.type == "income":
+                total_income += t.amount
+            else:
+                total_expense += t.amount
                 by_category[t.category] = by_category.get(t.category, 0) + t.amount
         top_categories = sorted(by_category.items(), key=lambda kv: kv[1], reverse=True)[:top]
         return {
-            "has_data": bool(rows),
+            "has_data": has_data,
             "total_income": total_income,
             "total_expense": total_expense,
             "balance": total_income - total_expense,
