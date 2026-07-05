@@ -6,7 +6,7 @@ AGENT_PORT="${AGENT_PORT:-15034}"
 LOG_DIR="${AGENT_LOG_DIR:-/var/log/agent-app}"
 LOG_FILE="${LOG_DIR}/monitor.log"
 MAX_LOG_SIZE=$((10 * 1024 * 1024))
-MAX_ROTATED_FILES=10
+MAX_ROTATED_FILES=9
 
 print_header() {
   printf '====== SYSTEM MONITOR RESULT ======\n\n'
@@ -42,27 +42,9 @@ rotate_log_if_needed() {
 }
 
 find_agent_pid() {
-  local candidates=(
-    "${AGENT_HOME}/agent-app"
-    "agent-app"
-    "agent-app-linux"
-  )
-
-  local candidate pid stat comm
-  for candidate in "${candidates[@]}"; do
-    while read -r pid; do
-      [ -n "$pid" ] || continue
-      stat=$(ps -o stat= -p "$pid" 2>/dev/null || true)
-      comm=$(ps -o comm= -p "$pid" 2>/dev/null || true)
-      if ! printf '%s\n' "$stat" | grep -q 'Z' &&
-        ! printf '%s\n' "$comm" | grep -Eq '^(bash|sh|su|nohup)$'; then
-        printf '%s\n' "$pid"
-        return 0
-      fi
-    done < <(pgrep -u agent-admin -f "$candidate" 2>/dev/null || true)
-  done
-
-  return 1
+  local pid
+  pid=$(pgrep -u agent-admin -f "(${AGENT_HOME}/agent-app|[.]/agent-app|agent-app-linux)") || return 1
+  printf '%s\n' "$pid" | head -n 1
 }
 
 check_port_listening() {

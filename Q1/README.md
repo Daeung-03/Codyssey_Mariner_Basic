@@ -123,11 +123,21 @@ root@agent-q1:/workspace# ss -tulnp | grep ":20022"
 tcp   LISTEN 0      128          0.0.0.0:20022      0.0.0.0:*    users:(("sshd",pid=3611,fd=3))
 tcp   LISTEN 0      128             [::]:20022         [::]:*    users:(("sshd",pid=3611,fd=4))
 
-hugeung@gimdaeung-ui-MacBookAir ~ % docker port agent-q1 20022
-0.0.0.0:20022
-[::]:20022
-hugeung@gimdaeung-ui-MacBookAir ~ % nc -zv localhost 20022
-Connection to localhost port 20022 [tcp/*] succeeded!
+// 컨테이너 배쉬에서 su로 로그인 성공
+root@agent-q1:/workspace# su agent-admin
+agent-admin@agent-q1:/workspace$ su root
+Password: 
+root@agent-q1:/workspace#
+
+// 외부 터미널에서 ssh 로그인 실패
+hugeung@gimdaeung-ui-MacBookAir ~ % ssh -p 20022 root@localhost       
+root@localhost's password: 
+Permission denied, please try again.
+root@localhost's password: 
+Permission denied, please try again.
+root@localhost's password: 
+root@localhost: Permission denied (publickey,password).
+
 ```
 
 ### 3. UFW 방화벽 활성화 및 허용 포트 확인
@@ -176,37 +186,237 @@ agent-core:x:1001:agent-admin,agent-dev
 ### 5. 디렉터리 권한 및 ACL 확인
 
 ```bash
+export AGENT_HOME=/home/agent-admin/agent-app
+
+mkdir -p "$AGENT_HOME/upload_files" "$AGENT_HOME/api_keys" "$AGENT_HOME/bin" /var/log/agent-app
+
+chown agent-admin:agent-core "$AGENT_HOME"
+chown agent-admin:agent-core "$AGENT_HOME/agent-app" 2>/dev/null || true
+chown agent-admin:agent-common "$AGENT_HOME/upload_files"
+chown agent-admin:agent-core "$AGENT_HOME/api_keys" "$AGENT_HOME/bin" /var/log/agent-app
+chmod 750 "$AGENT_HOME"
+chmod 755 "$AGENT_HOME/agent-app" 2>/dev/null || true
+chmod 770 "$AGENT_HOME/upload_files" "$AGENT_HOME/api_keys" /var/log/agent-app
+chmod 750 "$AGENT_HOME/bin"
+
+root@agent-q1:/workspace# ls -ld "$AGENT_HOME" "$AGENT_HOME/upload_files" "$AGENT_HOME/api_keys" "$AGENT_HOME/bin" /var/log/agent-app
+drwxr-x--- 5 agent-admin agent-core   4096 Jul  5 08:40 /home/agent-admin/agent-app
+drwxrwx--- 2 agent-admin agent-core   4096 Jul  5 08:40 /home/agent-admin/agent-app/api_keys
+drwxr-x--- 2 agent-admin agent-core   4096 Jul  5 08:40 /home/agent-admin/agent-app/bin
+drwxrwx--- 2 agent-admin agent-common 4096 Jul  5 08:40 /home/agent-admin/agent-app/upload_files
+drwxrwx--- 2 agent-admin agent-core   4096 Jul  5 08:40 /var/log/agent-app
+
+root@agent-q1:/workspace# getfacl "$AGENT_HOME/upload_files" "$AGENT_HOME/api_keys" /var/log/agent-app
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/upload_files
+# owner: agent-admin
+# group: agent-common
+user::rwx
+group::rwx
+other::---
+
+# file: home/agent-admin/agent-app/api_keys
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::rwx
+other::---
+
+# file: var/log/agent-app
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::rwx
+other::---
+
+// agent-app -> common 실행 가능하게
+root@agent-q1:/workspace# setfacl -m g:agent-common:--x /home/agent-admin/agent-app
+root@agent-q1:/workspace# getfacl /home/agent-admin/agent-app /home/agent-admin/agent-app/upload_files
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::r-x
+group:agent-common:--x
+mask::r-x
+other::---
+
+# file: home/agent-admin/agent-app/upload_files
+# owner: agent-admin
+# group: agent-common
+user::rwx
+group::rwx
+other::---
 
 ```
 
 ### 6. 환경 변수 및 키 파일 확인
 
 ```bash
+// 환경 변수 고정을 위해 profile.d 파일로 관리
+root@agent-q1:/workspace# cat /etc/profile.d/agent-app.sh 
+  export AGENT_HOME=/home/agent-admin/agent-app
+  export AGENT_PORT=15034
+  export AGENT_UPLOAD_DIR=$AGENT_HOME/upload_files
+  export AGENT_KEY_PATH=$AGENT_HOME/api_keys
+  export AGENT_LOG_DIR=/var/log/agent-app
 
+printf "%s\n" "agent_api_key_test" > /home/agent-admin/agent-app/api_keys/t_secret.key
+cp /home/agent-admin/agent-app/api_keys/t_secret.key /home/agent-admin/agent-app/api_keys/secret.key
+
+root@agent-q1:/workspace#   ls -l /etc/profile.d/agent-app.sh \
+    /home/agent-admin/agent-app/api_keys/t_secret.key \
+    /home/agent-admin/agent-app/api_keys/secret.key
+-rw-r--r-- 1 root        root       212 Jul  5 08:50 /etc/profile.d/agent-app.sh
+-rw-r----- 1 agent-admin agent-core  19 Jul  5 08:51 /home/agent-admin/agent-app/api_keys/secret.key
+-rw-r----- 1 agent-admin agent-core  19 Jul  5 08:51 /home/agent-admin/agent-app/api_keys/t_secret.key
+
+root@agent-q1:/workspace# su - agent-test -c 'test -r /home/agent-admin/agent-app/api_keys/t_secret.key||echo agent-test-key-read: deny'
+agent-test-key-read: deny
 ```
 
 ### 7. Agent 앱 Boot Sequence 및 포트 리슨 확인
 
 ```bash
+su - agent-admin -c 'cd "$AGENT_HOME" && nohup ./agent-app > /var/log/agent-app/agent-app.out 2>&1 & echo app_pid=$!'
+app_pid=4271
+
+root@agent-q1:/workspace# cat /var/log/agent-app/agent-app.out
+>>> Starting Agent Boot Sequence...
+[1/5] Checking User Account               [OK]
+   ... Running as service user 'agent-admin' (uid=1000)
+[2/5] Verifying Environment Variables     [OK]
+   ... All required Envs correct
+[3/5] Checking Required Files             [OK]
+   ... Verified 'secret.key' with correct key string.
+[4/5] Checking Port Availability          [OK]
+   ... Port 15034 is available.
+[5/5] Verifying Log Permission            [OK]
+   ... Log directory is writable: /var/log/agent-app
+------------------------------------------------------------
+All Boot Checks Passed!
+Agent READY
+2026-07-05 09:00:02,077 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-07-05 09:00:02,077 [INFO] Agent listening at port 15034
+2026-07-05 09:00:02,077 [INFO] === Agent Worker Started ===
+2026-07-05 09:00:02,077 [INFO]    > Cycle: 0 -> 256MB/Lv10 -> 0
+2026-07-05 09:00:02,077 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-07-05 09:00:02,090 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+2026-07-05 09:00:02,090 [INFO] [CPU] Occupy core for 1s (Level 1)
+2026-07-05 09:00:04,096 [INFO] --- Step Info: Mode=UP, CPU Lv=2, Mem=25MB ---
+2026-07-05 09:00:04,111 [INFO] [Memory] Increasing... (+25 MB) Total: 50 MB
+2026-07-05 09:00:04,111 [INFO] [CPU] Occupy core for 2s (Level 2)
+2026-07-05 09:00:07,117 [INFO] --- Step Info: Mode=UP, CPU Lv=3, Mem=50MB ---
+2026-07-05 09:00:07,133 [INFO] [Memory] Increasing... (+25 MB) Total: 75 MB
+2026-07-05 09:00:07,133 [INFO] [CPU] Occupy core for 3s (Level 3)
+2026-07-05 09:00:11,137 [INFO] --- Step Info: Mode=UP, CPU Lv=4, Mem=75MB ---
+2026-07-05 09:00:11,154 [INFO] [Memory] Increasing... (+25 MB) Total: 100 MB
+2026-07-05 09:00:11,154 [INFO] [CPU] Occupy core for 4s (Level 4)
+2026-07-05 09:00:16,156 [INFO] --- Step Info: Mode=UP, CPU Lv=5, Mem=100MB ---
+2026-07-05 09:00:16,176 [INFO] [Memory] Increasing... (+25 MB) Total: 125 MB
+
+root@agent-q1:/workspace# ss -tulnp | grep ':15034'
+tcp   LISTEN 0      1            0.0.0.0:15034      0.0.0.0:*
 
 ```
 
 ### 8. monitor.sh 수동 실행 결과 확인
 
 ```bash
+root@agent-q1:/workspace# su - agent-admin -c '/home/agent-admin/agent-app/bin/monitor.sh'
+====== SYSTEM MONITOR RESULT ======
 
+[HEALTH CHECK]
+Checking process 'agent-app'... [OK] (PID: 4316)
+Checking port 15034... [OK]
+Firewall UFW... [OK]
+
+[RESOURCE MONITORING]
+CPU Usage : 0.3%
+MEM Usage : 6.4%
+DISK Used  : 2%
+
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
+
+root@agent-q1:/workspace# tail -n 5 /var/log/agent-app/monitor.log
+[2026-07-05 09:09:01] PID:4316 CPU:0.3% MEM:6.4% DISK_USED:2%
 ```
 
 ### 9. monitor.log 누적 기록 확인
 
 ```bash
+ su - agent-admin -c '/home/agent-admin/agent-app/bin/monitor.sh'
+ sleep 2
+ x3
 
+root@agent-q1:/workspace# tail -n 5 /var/log/agent-app/monitor.log
+[2026-07-05 09:09:01] PID:4316 CPU:0.3% MEM:6.4% DISK_USED:2%
+[2026-07-05 09:09:49] PID:4316 CPU:0.5% MEM:9.1% DISK_USED:2%
+[2026-07-05 09:09:52] PID:4316 CPU:1.6% MEM:9.2% DISK_USED:2%
+[2026-07-05 09:09:55] PID:4316 CPU:0.8% MEM:9.2% DISK_USED:2%
 ```
 
 ### 10. cron 등록 및 자동 실행 확인
 
 ```bash
+root@agent-q1:/workspace# service cron start
+ * Starting periodic command scheduler cron                              [ OK ] 
+root@agent-q1:/workspace# service cron status
+ * cron is running
 
+root@agent-q1:/workspace# cron_line='* * * * * /home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/monitor-  cron.out 2>&1'
+
+root@agent-q1:/workspace#   
+  tmp=$(mktemp)
+  crontab -u agent-admin -l 2>/dev/null | grep -vF '/home/agent-admin/agent-app/bin/monitor.sh' > "$tmp" || true
+  printf "%s\n" "$cron_line" >> "$tmp"
+  crontab -u agent-admin "$tmp"
+  rm -f "$tmp"
+
+root@agent-q1:/workspace# crontab -u agent-admin -l
+* * * * * /home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/monitor-cron.out 2>&1
+
+root@agent-q1:/workspace#   before=$(wc -l < /var/log/agent-app/monitor.log 2>/dev/null || echo 0)
+  echo before_lines=$before
+
+  sleep 70
+
+  after=$(wc -l < /var/log/agent-app/monitor.log 2>/dev/null || echo 0)
+  echo after_lines=$after
+before_lines=6
+after_lines=7
+
+
+root@agent-q1:/workspace# tail -n 5 /var/log/agent-app/monitor.log
+[2026-07-05 09:09:55] PID:4316 CPU:0.8% MEM:9.2% DISK_USED:2%
+[2026-07-05 09:14:02] PID:4316 CPU:1.2% MEM:7.1% DISK_USED:2%
+[2026-07-05 09:15:02] PID:4316 CPU:0.9% MEM:9.3% DISK_USED:2%
+[2026-07-05 09:16:02] PID:4316 CPU:0.9% MEM:7.3% DISK_USED:2%
+[2026-07-05 09:17:02] PID:4316 CPU:0.5% MEM:8.2% DISK_USED:2%
+
+root@agent-q1:/workspace#  tail -n 20 /var/log/agent-app/monitor-cron.out
+CPU Usage : 0.9%
+MEM Usage : 7.3%
+DISK Used  : 2%
+
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
+====== SYSTEM MONITOR RESULT ======
+
+[HEALTH CHECK]
+Checking process 'agent-app'... [OK] (PID: 4316)
+Checking port 15034... [OK]
+Firewall UFW... [OK]
+
+[RESOURCE MONITORING]
+CPU Usage : 0.5%
+MEM Usage : 8.2%
+DISK Used  : 2%
+
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
 ```
 
 ## 학습 목표 답안
