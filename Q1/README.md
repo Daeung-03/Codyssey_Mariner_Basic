@@ -80,11 +80,10 @@ hugeung@gimdaeung-ui-MacBookAir ~ %  docker run \
     -v /Users/hugeung/Documents/Codyssey/Codyssey_Mariner_Basic/Q1:/workspace \
     -w /workspace \
     -d ubuntu:22.04 sleep infinity
-c92139e310624181db812b490222913f34590f4e5bf50a9821f270317e7b5c6a
 
-hugeung@gimdaeung-ui-MacBookAir ~ % docker ps --filter name=agent-q1
-CONTAINER ID   IMAGE          COMMAND            CREATED          STATUS          PORTS                                                                                              NAMES
-c92139e31062   ubuntu:22.04   "sleep infinity"   23 seconds ago   Up 22 seconds   0.0.0.0:15034->15034/tcp, [::]:15034->15034/tcp, 0.0.0.0:20022->20022/tcp, [::]:20022->20022/tcp   agent-q1
+hugeung@gimdaeung-ui-MacBookAir ~ % docker ps -a
+CONTAINER ID   IMAGE          COMMAND            CREATED         STATUS         PORTS                                                                                              NAMES
+9db04647e3dd   ubuntu:22.04   "sleep infinity"   4 minutes ago   Up 4 minutes   0.0.0.0:15034->15034/tcp, [::]:15034->15034/tcp, 0.0.0.0:20022->20022/tcp, [::]:20022->20022/tcp   agent-q1
 
 hugeung@gimdaeung-ui-MacBookAir ~ % docker port agent-q1
 15034/tcp -> 0.0.0.0:15034
@@ -115,29 +114,29 @@ root@agent-q1:/workspace#   printf "%s\n" \
     "PermitRootLogin no" \
     > /etc/ssh/sshd_config.d/99-agent-q1.conf
 
-root@agent-q1:/workspace# grep -R -E "^(Port|PermitRootLogin)" /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf
-/etc/ssh/sshd_config.d/99-agent-q1.conf:Port 20022
-/etc/ssh/sshd_config.d/99-agent-q1.conf:PermitRootLogin no
+// root 계정 비밀번호 설정
+root@agent-q1:/workspace# passwd root
+New password: 
+Retype new password: 
+passwd: password updated successfully
 
-root@agent-q1:/workspace# ss -tulnp | grep ":20022"
-tcp   LISTEN 0      128          0.0.0.0:20022      0.0.0.0:*    users:(("sshd",pid=3611,fd=3))
-tcp   LISTEN 0      128             [::]:20022         [::]:*    users:(("sshd",pid=3611,fd=4))
-
-// 컨테이너 배쉬에서 su로 로그인 성공
-root@agent-q1:/workspace# su agent-admin
-agent-admin@agent-q1:/workspace$ su root
+// 컨테이너 내부에서 로그인 성공
+agent-admin@agent-q1:~$ su root
 Password: 
-root@agent-q1:/workspace#
+root@agent-q1:/home/agent-admin#
 
-// 외부 터미널에서 ssh 로그인 실패
-hugeung@gimdaeung-ui-MacBookAir ~ % ssh -p 20022 root@localhost       
+// SSH 외부에서 접속 시도
+hugeung@gimdaeung-ui-MacBookAir ~ % ssh -p 20022 agent-admin@localhost
+Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 6.12.72-linuxkit aarch64)
+agent-admin@agent-q1:~$ // agent-admin 계정은 성공함
+
+hugeung@gimdaeung-ui-MacBookAir ~ % ssh -p 20022 root@localhost
 root@localhost's password: 
 Permission denied, please try again.
 root@localhost's password: 
 Permission denied, please try again.
 root@localhost's password: 
-root@localhost: Permission denied (publickey,password).
-
+root@localhost: Permission denied (publickey,password) // 비밀번호 정확하게 입력해도 실패함
 ```
 
 ### 3. UFW 방화벽 활성화 및 허용 포트 확인
@@ -230,7 +229,7 @@ group::rwx
 other::---
 
 // agent-app -> common 실행 가능하게
-root@agent-q1:/workspace# setfacl -m g:agent-common:--x /home/agent-admin/agent-app
+root@agent-q1:/workspace# setfacl -m g:agent-common:--x /home/agent-admin/agent-app //핵심~!!!!!!
 root@agent-q1:/workspace# getfacl /home/agent-admin/agent-app /home/agent-admin/agent-app/upload_files
 getfacl: Removing leading '/' from absolute path names
 # file: home/agent-admin/agent-app

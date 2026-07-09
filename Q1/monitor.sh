@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-set -u
+set -u  # 정의되지 않은 변수 에러 처리
 
 AGENT_HOME="${AGENT_HOME:-/home/agent-admin/agent-app}"
-AGENT_PORT="${AGENT_PORT:-15034}"
+AGENT_PORT="${AGENT_PORT:-15034}" # 기존변수 or 지정값
 LOG_DIR="${AGENT_LOG_DIR:-/var/log/agent-app}"
 LOG_FILE="${LOG_DIR}/monitor.log"
-MAX_LOG_SIZE=$((10 * 1024 * 1024))
+MAX_LOG_SIZE=$((10 * 1024 * 1024))  #10MB(1024(bytes) * 1024(KB) * 10)
 MAX_ROTATED_FILES=9
 
 print_header() {
@@ -25,13 +25,13 @@ rotate_log_if_needed() {
   [ -f "$LOG_FILE" ] || return 0
 
   local size
-  size=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
-  [ "$size" -lt "$MAX_LOG_SIZE" ] && return 0
+  size=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0) # wc -c : 파일의 바이트 수를 계산하는 명령어, 에러 메세지 버리기. 
+  [ "$size" -lt "$MAX_LOG_SIZE" ] && return 0 # 로그 파일 크기가 최대 크기보다 작으면 로그 회전 필요 없음
 
   local i
   i=$((MAX_ROTATED_FILES - 1))
   while [ "$i" -ge 1 ]; do
-    if [ -f "${LOG_FILE}.${i}" ]; then
+    if [ -f "${LOG_FILE}.${i}" ]; then  # 가장 마지막 숫자 찾아서 한 칸씩 밀기.
       mv "${LOG_FILE}.${i}" "${LOG_FILE}.$((i + 1))"
     fi
     i=$((i - 1))
@@ -43,7 +43,7 @@ rotate_log_if_needed() {
 
 find_agent_pid() {
   local pid
-  pid=$(pgrep -u agent-admin -f "(${AGENT_HOME}/agent-app|[.]/agent-app|agent-app-linux)") || return 1
+  pid=$(pgrep -u agent-admin -f "(${AGENT_HOME}/agent-app|[.]/agent-app|agent-app-linux)") || return 1  # -u: 사용자 이름, -f: 전체 명령어 라인에서 검색
   printf '%s\n' "$pid" | head -n 1
 }
 
@@ -59,13 +59,6 @@ check_firewall() {
     fi
     if [ -r /etc/ufw/ufw.conf ] && grep -q '^ENABLED=yes' /etc/ufw/ufw.conf; then
       printf 'Firewall UFW... [OK]\n'
-      return 0
-    fi
-  fi
-
-  if command -v firewall-cmd >/dev/null 2>&1; then
-    if firewall-cmd --state 2>/dev/null | grep -q '^running$'; then
-      printf 'Firewall firewalld... [OK]\n'
       return 0
     fi
   fi

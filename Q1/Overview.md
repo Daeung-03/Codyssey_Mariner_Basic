@@ -33,7 +33,7 @@ Step 0부터 Step 7까지는 “macOS에서 Docker로 Ubuntu 컨테이너를 만
 
   apt-get install -y openssh-server iproute2
 
-  설정 파일에는 다음 내용을 넣었습니다.
+  99-agent-q1.conf 파일을 별도로 생성해서 설정 추가(기본 SSH 파일을 수정하지 않기 위함 + 보통 다음 디렉토리의 설정을 함께 읽기 때문에 이름도 99)
 
   Port 20022
   PermitRootLogin no
