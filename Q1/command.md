@@ -55,4 +55,4 @@ ufw status verbose - 상태 출력
   crontab -u agent-admin -l 2>/dev/null | grep -vF '/home/agent-admin/agent-app/bin/monitor.sh' > "$tmp" || true
   printf "%s\n" "$cron_line" >> "$tmp"
   crontab -u agent-admin "$tmp"
-  rm -f "$tmp"
+                 tail -n 5 /var/log/agent-app/monitor.logrm -f "$tmp"

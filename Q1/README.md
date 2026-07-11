@@ -380,7 +380,7 @@ root@agent-q1:/workspace# crontab -u agent-admin -l
 root@agent-q1:/workspace#   before=$(wc -l < /var/log/agent-app/monitor.log 2>/dev/null || echo 0)
   echo before_lines=$before
 
-  sleep 70
+  sleep 60
 
   after=$(wc -l < /var/log/agent-app/monitor.log 2>/dev/null || echo 0)
   echo after_lines=$after
