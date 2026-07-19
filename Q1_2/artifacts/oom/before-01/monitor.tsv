@@ -1,0 +1,7 @@
+timestamp	pid	state	cpu_percent	rss_kb	rss_mb	threads	elapsed	command
+2026-07-19T08:36:03+00:00	5565	R	50.0	9884	9.65	1	00:00	agent-leak-app-
+2026-07-19T08:36:04+00:00	5565	SN	2.9	16700	16.31	1	00:01	agent-leak-app-
+2026-07-19T08:36:05+00:00	5565	SN	1.4	16700	16.31	1	00:02	agent-leak-app-
+2026-07-19T08:36:06+00:00	5565	SN	1.3	42304	41.31	1	00:03	agent-leak-app-
+2026-07-19T08:36:07+00:00	5565	SN	0.9	42304	41.31	1	00:04	agent-leak-app-
+2026-07-19T08:36:08+00:00	5565	SN	0.7	42304	41.31	1	00:05	agent-leak-app-

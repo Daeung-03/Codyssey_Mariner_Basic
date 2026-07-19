@@ -1,0 +1,8 @@
+top - 09:04:31 up 20:41,  0 user,  load average: 0.24, 0.17, 0.18
+Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st 
+MiB Mem :   7836.4 total,   6726.4 free,    886.2 used,    391.8 buff/cache     
+MiB Swap:   1024.0 total,   1024.0 free,      0.0 used.   6950.2 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+ 7123 analyst   30  10  452472 298604   8472 S   0.0   3.7   0:00.20 agent-lea+
