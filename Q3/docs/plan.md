@@ -441,15 +441,34 @@ Q3/
 
 ## 11. 구현 순서
 
-1. 이중 연결 리스트와 단위 테스트를 구현하여 포인터 불변식과 O(1) 연산 기반을 확정한다.
-2. 연결 리스트를 버킷 체인으로 재사용하는 해시맵과 리사이징 테스트를 구현한다.
-3. 배열 기반 최소 힙과 위·아래 heapify 테스트를 구현한다.
-4. `MiniRedis`의 핵심 상태, 공통 삭제 헬퍼, 만료 정리와 가짜 시계 주입을 구현한다.
-5. String 명령, 메모리 제한·LRU 퇴출, TTL 명령 순으로 핵심 기능을 연결한다.
-6. `shlex` 기반 CLI 디스패치와 Redis 스타일 출력·오류 처리를 구현한다.
-7. 짧은 통합 테스트로 자료구조 사이의 핵심 상태 일관성을 검증한다.
-8. 리스트 선형 탐색과 커스텀 해시맵 조회를 비교하는 단일 학습용 스크립트를 작성한다.
-9. 중복 로직을 공통 헬퍼로 정리하고 주석·docstring·실행 방법을 최종 검토한다.
+아래 4단계로 진행하며, 각 단계가 끝나면 테스트 실행 또는 REPL 동작으로 즉시 검증한다.
+
+### A. 기반 자료구조 — ✅ 완료
+
+- 이중 연결 리스트 구현 + 단위 테스트 (6개)
+- 체이닝 해시맵 구현 + 리사이징 단위 테스트 (6개)
+- 배열 기반 최소 힙 구현 + heapify 단위 테스트 (6개)
+- 검증: `python -m unittest discover -s tests` → 18개 전부 통과
+
+### B. MiniRedis 핵심 + 전체 명령 — ✅ 완료
+
+- `core.py`에 `CacheEntry`, `OutOfMemoryError`, `MiniRedis` 클래스 구현
+- 공통 삭제 헬퍼 `_delete_key`, 만료 정리 `_purge_expired`, 가짜 시계 주입
+- String 6개(SET/GET/DEL/EXISTS/DBSIZE/KEYS) + 메모리 2개(CONFIG SET maxmemory/INFO memory) + TTL 2개(EXPIRE/TTL) 명령 전부 한 번에 구현
+- LRU 퇴출, TTL lazy deletion, 단일 엔트리 OOM 포함
+- 검증: 통합 테스트(`tests/test_mini_redis.py`)로 LRU·TTL·OOM·명령 결과 검증
+
+### C. CLI — ✅ 완료
+
+- `cli.py`에 `shlex` 파싱, 명령 디스패치, Redis 스타일 출력, 에러 처리 구현
+- `exit`/`quit`/EOF 종료, 대소문자 무시, 따옴표 값 처리
+- 검증: `python -m mini_redis.cli`로 REPL 실행하여 Problem.md 결과 예시 재현
+
+### D. 벤치마크 + 마무리 — ✅ 완료
+
+- `lookup_benchmark.py`: 리스트 선형 탐색 vs 커스텀 해시맵 O(1) 조회 비교
+- 전체 docstring·주석 최종 점검, 불필요한 중복 제거
+- 검증: 벤치마크 스크립트 실행 후 차이 관찰
 
 ## 12. 제약 준수와 제외 범위
 
