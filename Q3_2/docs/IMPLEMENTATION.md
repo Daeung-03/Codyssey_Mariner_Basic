@@ -46,9 +46,12 @@ PROBLEM.md의 요구사항을 구현 가능한 수준의 명세로 변환한다.
 
 ---
 
-## Phase 2: 구현 (다음 단계)
+## Phase 2: 구현
 
-> (미작성 — 구현 시 업데이트 예정)
+### 완료
+
+- `mini_git/models.py` — `Commit` dataclass + `generate_commit_hash()` 유틸 작성
+- 
 
 ---
 
