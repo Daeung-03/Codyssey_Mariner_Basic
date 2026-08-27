@@ -67,13 +67,16 @@ mini-git> init "Alice"
 mini-git> commit "Initial commit"
 ```
 
-### 2단계: 브랜치 생성 및 분기
+### 2단계: 작성자 변경 + 브랜치 분기
 
 ```
+mini-git> commit "Alice initial work"
+mini-git> user "Bob"
 mini-git> branch feature
 mini-git> switch feature
 mini-git> commit "Add login feature"
 mini-git> switch main
+mini-git> user "Alice"
 mini-git> commit "Add payment feature"
 ```
 
@@ -129,6 +132,7 @@ python test_mini_git.py
 | 명령어 | 설명 |
 |--------|------|
 | `init <user>` | 저장소 초기화 |
+| `user <name>` | 현재 작성자 변경 |
 | `commit <message>` | 새 커밋 생성 |
 | `branch <name>` | 브랜치 생성 |
 | `switch <name>` | 브랜치 전환 |

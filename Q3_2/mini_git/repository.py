@@ -49,6 +49,13 @@ class Repository:
         ]
         return "\n".join(lines)
 
+    def user(self, user_name: str) -> str:
+        """USER <user_name> — 현재 작성자를 변경한다."""
+        if not self.initialized:
+            return "Repository not initialized"
+        self.author = user_name
+        return f"Current user: {user_name}"
+
     def branch(self, branch_name: str) -> str:
         """BRANCH <branch_name>"""
         if not self.initialized:

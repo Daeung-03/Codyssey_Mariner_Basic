@@ -39,6 +39,11 @@ def dispatch(repo: Repository, parsed) -> str:
                 return "Invalid args"
             return repo.init(args[0])
 
+        case "USER":
+            if len(args) != 1:
+                return "Invalid args"
+            return repo.user(args[0])
+
         case "BRANCH":
             if len(args) != 1:
                 return "Invalid args"
