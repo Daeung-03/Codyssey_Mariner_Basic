@@ -48,13 +48,30 @@ PROBLEM.md의 요구사항을 구현 가능한 수준의 명세로 변환한다.
 
 ## Phase 2: 구현
 
-### 완료
+### 목표
 
-- `mini_git/models.py` — `Commit` dataclass + `generate_commit_hash()` 유틸 작성
-- `mini_git/sorting.py` — Merge Sort 직접 구현 (안정 정렬, key 함수 지원)
-- `mini_git/index.py` — InvertedIndex 클래스 (키워드/작성자 역색인, O(1) 조회)
-- `mini_git/graph.py` — 위상 정렬(Kahn's), BFS 최단 경로, 조상 탐색 (순수 함수)
-- `mini_git/repository.py` — Repository Facade (상태 관리 + 명령 실행, 알고리즘 모듈에 위임)
+SPEC.md에 정의된 모듈 구조대로 각 모듈을 구현하고, 단위 검증을 통해 동작을 확인한다.
+
+### 작업 내용
+
+1. 도메인 모델 정의 (Commit, hash 생성)
+2. 제약사항 준수 정렬 알고리즘 직접 구현
+3. 역색인 인덱스 구현
+4. 그래프 알고리즘 구현 (위상 정렬, BFS, 조상 탐색)
+5. Repository Facade 구현 (상태 관리 + 명령 실행)
+6. CLI 파서 및 REPL 엔트리 포인트 구현
+
+### 구현 모듈
+
+| 모듈 | 설명 |
+|------|------|
+| `mini_git/models.py` | `Commit` dataclass + `generate_commit_hash()` (SHA-1 기반 6자리 hex) |
+| `mini_git/sorting.py` | Merge Sort 직접 구현 (안정 정렬, O(n log n), key 함수 지원) |
+| `mini_git/index.py` | InvertedIndex 클래스 (키워드/작성자 역색인, O(1) 조회) |
+| `mini_git/graph.py` | 위상 정렬(Kahn's), BFS 최단 경로, 조상 탐색 (순수 함수) |
+| `mini_git/repository.py` | Repository Facade (상태 관리 + 명령 실행, 알고리즘 모듈에 위임) |
+| `mini_git/parser.py` | CLI 명령 파싱 (shlex 토큰화, `--key=value` 옵션, 대소문자 정규화) |
+| `main.py` | REPL 루프 (`mini-git>` 프롬프트) + match-case 디스패치 |
 
 ---
 
