@@ -54,6 +54,7 @@ PROBLEM.md의 요구사항을 구현 가능한 수준의 명세로 변환한다.
 - `mini_git/sorting.py` — Merge Sort 직접 구현 (안정 정렬, key 함수 지원)
 - `mini_git/index.py` — InvertedIndex 클래스 (키워드/작성자 역색인, O(1) 조회)
 - `mini_git/graph.py` — 위상 정렬(Kahn's), BFS 최단 경로, 조상 탐색 (순수 함수)
+- `mini_git/repository.py` — Repository Facade (상태 관리 + 명령 실행, 알고리즘 모듈에 위임)
 
 ---
 
