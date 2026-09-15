@@ -246,12 +246,154 @@ const initializeContactForm = () => {
   });
 };
 
+const PROJECT_STATUS = Object.freeze({
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  EMPTY: 'empty',
+});
+
+const HTML_ESCAPE_CHARACTERS = Object.freeze({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;',
+});
+
+const escapeHTML = (value) => String(value).replace(
+  /[&<>"']/g,
+  (character) => HTML_ESCAPE_CHARACTERS[character],
+);
+
+const renderProjectCard = ({
+  name,
+  description,
+  html_url: repositoryUrl,
+  language,
+  stargazers_count: stars,
+  forks_count: forks,
+}) => `
+  <article class="project-card">
+    <h3>${escapeHTML(name)}</h3>
+    <p class="project-card__description">
+      ${escapeHTML(description || '저장소 설명이 없습니다.')}
+    </p>
+    <ul class="project-card__meta" aria-label="저장소 정보">
+      <li>${escapeHTML(language || '기타')}</li>
+      <li>Stars ${escapeHTML(stars)}</li>
+      <li>Forks ${escapeHTML(forks)}</li>
+    </ul>
+    <a href="${escapeHTML(repositoryUrl)}" target="_blank" rel="noopener noreferrer">
+      GitHub에서 보기
+    </a>
+  </article>
+`;
+
+const renderProjects = (container, state) => {
+  if (state.status === PROJECT_STATUS.LOADING) {
+    container.innerHTML = `
+      <div class="projects-status" role="status">
+        <span class="projects-spinner" aria-hidden="true"></span>
+        <p>프로젝트를 불러오는 중...</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.status === PROJECT_STATUS.ERROR) {
+    container.innerHTML = `
+      <div class="projects-status projects-status--error" role="alert">
+        <p>${escapeHTML(state.errorMessage)}</p>
+        <button type="button" data-action="retry-projects">다시 시도</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.status === PROJECT_STATUS.EMPTY) {
+    container.innerHTML = `
+      <div class="projects-status" role="status">
+        <p>표시할 프로젝트가 없습니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = state.projects.map(renderProjectCard).join('');
+};
+
+const initializeProjects = () => {
+  const projectsContainer = document.querySelector('#projects-content');
+
+  if (!projectsContainer) {
+    return;
+  }
+
+  const projectsState = {
+    status: PROJECT_STATUS.LOADING,
+    projects: [],
+    errorMessage: '',
+  };
+
+  const loadProjects = async () => {
+    projectsState.status = PROJECT_STATUS.LOADING;
+    projectsState.errorMessage = '';
+    renderProjects(projectsContainer, projectsState);
+
+    try {
+      const username = CONFIG.githubUsername.trim();
+
+      if (!username) {
+        throw new Error('missing-username');
+      }
+
+      const endpoint = `https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=12`;
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        throw new Error(response.status === 403 ? 'rate-limit' : 'request-failed');
+      }
+
+      const repositories = await response.json();
+
+      if (!Array.isArray(repositories)) {
+        throw new Error('invalid-response');
+      }
+
+      projectsState.projects = repositories.filter(({ archived }) => !archived);
+      projectsState.status = projectsState.projects.length > 0
+        ? PROJECT_STATUS.SUCCESS
+        : PROJECT_STATUS.EMPTY;
+    } catch (error) {
+      projectsState.status = PROJECT_STATUS.ERROR;
+      projectsState.projects = [];
+      projectsState.errorMessage = error.message === 'rate-limit'
+        ? '프로젝트를 불러올 수 없습니다. GitHub API 요청 한도를 초과했습니다.'
+        : '프로젝트를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.';
+    }
+
+    renderProjects(projectsContainer, projectsState);
+  };
+
+  projectsContainer.addEventListener('click', (event) => {
+    const retryButton = event.target.closest('[data-action="retry-projects"]');
+
+    if (retryButton) {
+      loadProjects();
+    }
+  });
+
+  loadProjects();
+};
+
 const initializeApp = () => {
   initializeTheme();
   initializeNavigation();
   initializeScrollUI();
   initializeScrollAnimations();
   initializeContactForm();
+  initializeProjects();
   console.log('Q4 portfolio initialized.', CONFIG);
 };
 
