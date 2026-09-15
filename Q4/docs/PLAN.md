@@ -143,3 +143,56 @@ Q4/
 - GitHub Pages로 배포, 배포 URL에서 전 기능 동작 확인
 - README에 프로젝트 설명 / 사용 기술 / 배포 URL / 스크린샷(데스크톱·모바일·다크모드) 포함
 - 스크롤 임계값(300px), 네비 변경 임계값(60px), IO threshold(0.2)는 README에 명시
+
+---
+
+## 9. 구현 단계 (한 단계 = 한 번에 구현 + 즉시 눈으로 체크)
+
+최소 테스트 환경 = 별도 테스트 프레임워크 없이 **Live Server / 정적 서버로 열어 브라우저에서 확인**한다.
+각 단계는 이전 단계 위에 누적되며, 단계 끝의 "체크"를 통과하면 다음 단계로 넘어간다.
+
+> 실행: `cd Q4 && python3 -m http.server 5500` → `http://localhost:5500`
+
+### STEP 0 — 프로젝트 뼈대
+- 구현: `index.html`(빈 골격), `css/style.css`(빈 파일), `js/config.js`, `js/main.js`(console.log), `images/` 생성. HTML에 css link + `defer` script 연결.
+- ✅ 체크: 페이지가 열리고, 콘솔에 `main.js` 로그가 찍히며 css가 적용된다(배경색 등).
+
+### STEP 1 — 시맨틱 마크업 + 섹션 골격
+- 구현: header/nav/main/section(hero·about·skills·projects·contact)/footer, 앵커 링크, 폼 마크업(label-for), 이미지 alt.
+- ✅ 체크: 6개 섹션이 순서대로 보이고, 네비 링크 클릭 시 해당 섹션으로 점프한다(스무스는 아직 아님).
+
+### STEP 2 — CSS 기반 (변수 + 레이아웃 + 반응형)
+- 구현: `:root` 변수, 모바일 퍼스트 스타일, 768/1024 미디어쿼리, 네비 Flexbox, Projects Grid(auto-fit/minmax), 카드 box-shadow + hover transition.
+- ✅ 체크: 창 너비를 줄였다 늘렸다 하면 레이아웃이 3단계로 바뀐다. 네비는 로고 좌/메뉴 우.
+
+### STEP 3 — 네비게이션 인터랙션 (햄버거 + 부드러운 스크롤)
+- 구현: 모바일에서 메뉴 숨김 + 햄버거 노출, 클릭 시 `.active` 토글, 앵커 클릭 시 smooth scroll.
+- ✅ 체크: 모바일 폭에서 햄버거로 메뉴 열고 닫힘. 데스크톱에서 메뉴 클릭 시 부드럽게 이동.
+
+### STEP 4 — 다크 모드 (상태 → 렌더 #1)
+- 구현: 토글 버튼 → `data-theme` 전환, localStorage 저장/복원.
+- ✅ 체크: 토글 시 전체 테마 바뀜. 새로고침해도 유지됨.
+
+### STEP 5 — 스크롤 기반 UI (스크롤탑 + 네비 스타일 + 등장 애니메이션)
+- 구현: scrollY>300 스크롤탑 버튼 표시/클릭 시 top, scrollY>60 nav `.scrolled`, IntersectionObserver(threshold 0.2)로 `.visible` 부여.
+- ✅ 체크: 스크롤 내리면 버튼 등장/클릭 시 최상단, 네비 배경 변함, 섹션이 화면 진입 시 애니메이션.
+
+### STEP 6 — Contact 폼 유효성 (상태 → 렌더 #2)
+- 구현: submit 시 preventDefault, 필수값·이메일 형식 검증, 필드 근처 에러 메시지, 성공 메시지.
+- ✅ 체크: 빈 필드/잘못된 이메일 제출 시 에러 표시. 정상 입력 시 성공 메시지.
+
+### STEP 7 — GitHub API 연동 (상태 → 렌더 #3)
+- 구현: `config.js`의 username으로 `fetch` + async/await + try/catch. loading/success/error(재시도)/empty 4상태 렌더. `map`+템플릿 리터럴로 카드 생성.
+- ✅ 체크: 로딩 표시 후 카드 렌더. username을 존재하지 않는 값으로 바꾸면 에러+재시도 버튼. repos 없는 계정이면 빈 상태.
+
+### STEP 8 — 반응형/다크모드 QA + 마무리
+- 구현: 모바일/태블릿/데스크톱 + 다크모드 교차 점검, 이미지 alt/label-for/인라인스타일·onclick 금지 최종 확인.
+- ✅ 체크: 세 뷰포트 × 라이트/다크 조합에서 깨짐 없음. 콘솔 에러 없음.
+
+### STEP 9 — 배포 + README 마감
+- 구현: GitHub Pages 배포, README에 배포 URL·스크린샷(데스크톱/모바일/다크)·임계값 기재.
+- ✅ 체크: 배포 URL에서 전 기능(반응형/인터랙션/API/폼) 동작.
+
+### (선택) STEP B — 보너스
+- 언어별 필터(`filter`), Hero 타이핑 효과, `prefers-color-scheme` 감지, Formspree 실제 전송.
+- ✅ 체크: 각 기능 개별 동작 확인. Formspree는 배포 후 실제 수신까지 확인.
