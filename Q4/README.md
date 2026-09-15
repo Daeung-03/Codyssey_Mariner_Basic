@@ -6,7 +6,7 @@
 - 구현 계획: [`docs/PLAN.md`](docs/PLAN.md)
 - GitHub 사용자 설정 및 임계값: [`js/config.js`](js/config.js)
 - GitHub 저장소: <https://github.com/Daeung-03/Codyssey_Mariner_Basic>
-- 배포 URL: GitHub Pages 설정 후 기재
+- 배포 URL: <https://daeung-03.github.io/Codyssey_Mariner_Basic/Q4/>
 
 ---
 
