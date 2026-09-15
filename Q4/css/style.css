@@ -652,6 +652,35 @@ section h2 {
   }
 }
 
+/* ========================================
+   Scroll states and reveal animation
+======================================== */
+.site-header {
+  background: transparent;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.site-header.scrolled {
+  background: var(--color-header);
+  box-shadow: 0 0.5rem 1.5rem rgb(15 23 42 / 10%);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Reduce motion when requested by the operating system. */
 @media (prefers-reduced-motion: reduce) {
   *,

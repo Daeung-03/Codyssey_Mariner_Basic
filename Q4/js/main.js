@@ -1,5 +1,9 @@
 const THEME_STORAGE_KEY = 'portfolio-theme';
 
+const getPreferredScrollBehavior = () => (
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+);
+
 const getStoredTheme = () => {
   try {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -75,7 +79,6 @@ const initializeNavigation = () => {
     }
   });
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const internalLinks = document.querySelectorAll('a[href^="#"]');
 
   internalLinks.forEach((link) => {
@@ -90,7 +93,7 @@ const initializeNavigation = () => {
       event.preventDefault();
       setMenuState(menu, menuButton, false);
       target.scrollIntoView({
-        behavior: prefersReducedMotion.matches ? 'auto' : 'smooth',
+        behavior: getPreferredScrollBehavior(),
         block: 'start',
       });
       window.history.pushState(null, '', targetSelector);
@@ -98,9 +101,65 @@ const initializeNavigation = () => {
   });
 };
 
+const initializeScrollUI = () => {
+  const header = document.querySelector('.site-header');
+  const scrollTopButton = document.querySelector('#scroll-top');
+
+  if (!header || !scrollTopButton) {
+    return;
+  }
+
+  const renderScrollUI = () => {
+    const showScrollTop = window.scrollY >= CONFIG.scrollTopThreshold;
+    const highlightHeader = window.scrollY >= CONFIG.navScrollThreshold;
+
+    scrollTopButton.hidden = !showScrollTop;
+    header.classList.toggle('scrolled', highlightHeader);
+  };
+
+  window.addEventListener('scroll', renderScrollUI, { passive: true });
+  scrollTopButton.addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: getPreferredScrollBehavior(),
+    });
+  });
+
+  renderScrollUI();
+};
+
+const initializeScrollAnimations = () => {
+  const animatedSections = document.querySelectorAll('main section');
+
+  if (!('IntersectionObserver' in window)) {
+    animatedSections.forEach((section) => section.classList.add('visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(({ isIntersecting, target }) => {
+      if (!isIntersecting) {
+        return;
+      }
+
+      target.classList.add('visible');
+      observer.unobserve(target);
+    });
+  }, {
+    threshold: CONFIG.observerThreshold,
+  });
+
+  animatedSections.forEach((section) => {
+    section.classList.add('reveal');
+    observer.observe(section);
+  });
+};
+
 const initializeApp = () => {
   initializeTheme();
   initializeNavigation();
+  initializeScrollUI();
+  initializeScrollAnimations();
   console.log('Q4 portfolio initialized.', CONFIG);
 };
 
