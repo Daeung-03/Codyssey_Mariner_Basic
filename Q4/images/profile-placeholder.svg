@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-labelledby="title description">
+  <title id="title">프로필 이미지 자리 표시</title>
+  <desc id="description">회색 배경 위 사람의 머리와 어깨를 단순화한 그림</desc>
+  <rect width="240" height="240" rx="24" fill="#d1d5db"/>
+  <circle cx="120" cy="88" r="40" fill="#6b7280"/>
+  <path d="M48 218c4-48 34-76 72-76s68 28 72 76" fill="#6b7280"/>
+</svg>

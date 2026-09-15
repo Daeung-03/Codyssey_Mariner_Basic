@@ -3,15 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="개발자 포트폴리오">
   <title>Portfolio</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
 <body>
+  <header class="site-header">
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a class="site-logo" href="#hero">Portfolio</a>
+
+      <ul class="site-nav__links" id="primary-navigation">
+        <li><a href="#hero">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#skills">Skills</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+
+      <div class="site-nav__actions">
+        <button id="theme-toggle" type="button" aria-label="다크 모드로 전환">Theme</button>
+        <button
+          id="menu-toggle"
+          type="button"
+          aria-label="메뉴 열기"
+          aria-controls="primary-navigation"
+          aria-expanded="false"
+        >
+          Menu
+        </button>
+      </div>
+    </nav>
+  </header>
+
   <main>
-    <h1>Portfolio</h1>
-    <p>프로젝트 기본 구성이 완료되었습니다.</p>
+    <section id="hero" aria-labelledby="hero-title">
+      <p>안녕하세요!</p>
+      <h1 id="hero-title">사용자의 문제를 해결하는 웹 개발자입니다.</h1>
+      <p>웹 표준과 기본기에 충실한 서비스를 만듭니다.</p>
+      <div class="hero__actions">
+        <a href="#projects">프로젝트 보기</a>
+        <a href="#contact">문의하기</a>
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-title">
+      <h2 id="about-title">About Me</h2>
+      <article class="about-profile">
+        <img
+          src="images/profile-placeholder.svg"
+          alt="포트폴리오 작성자의 프로필 자리 표시 이미지"
+          width="240"
+          height="240"
+        >
+        <div>
+          <h3>기본을 이해하고 성장하는 개발자</h3>
+          <p>
+            HTML, CSS, JavaScript의 동작 원리를 학습하며 접근성과 사용성을 고려한
+            웹사이트를 만들고 있습니다.
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <section id="skills" aria-labelledby="skills-title">
+      <h2 id="skills-title">Skills</h2>
+      <ul class="skills-list">
+        <li>HTML5</li>
+        <li>CSS3</li>
+        <li>JavaScript</li>
+        <li>Git &amp; GitHub</li>
+      </ul>
+    </section>
+
+    <section id="projects" aria-labelledby="projects-title">
+      <h2 id="projects-title">Projects</h2>
+      <p>GitHub 저장소를 불러와 프로젝트 카드를 표시합니다.</p>
+      <div id="projects-content" aria-live="polite">
+        <p>프로젝트 데이터 연결 준비 중입니다.</p>
+      </div>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">Contact</h2>
+      <form id="contact-form" novalidate>
+        <div class="form-field">
+          <label for="name">이름</label>
+          <input id="name" name="name" type="text" autocomplete="name" required aria-describedby="name-error">
+          <small id="name-error" class="form-error" aria-live="polite"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="email">이메일</label>
+          <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-error">
+          <small id="email-error" class="form-error" aria-live="polite"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="message">메시지</label>
+          <textarea id="message" name="message" rows="6" required aria-describedby="message-error"></textarea>
+          <small id="message-error" class="form-error" aria-live="polite"></small>
+        </div>
+
+        <button type="submit">메시지 보내기</button>
+        <p id="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Portfolio. All rights reserved.</p>
+    <nav aria-label="소셜 링크">
+      <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+    </nav>
+  </footer>
+
+  <button id="scroll-top" type="button" aria-label="페이지 맨 위로 이동" hidden>Top</button>
 </body>
 </html>
