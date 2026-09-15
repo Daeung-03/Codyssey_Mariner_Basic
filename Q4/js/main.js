@@ -211,6 +211,13 @@ const initializeContactForm = () => {
     return;
   }
 
+  const submitButton = form.querySelector('button[type="submit"]');
+  const endpoint = form.getAttribute('action');
+
+  if (!submitButton || !endpoint) {
+    return;
+  }
+
   const controls = [...form.querySelectorAll('input, textarea')]
     .map((field) => ({
       field,
@@ -221,6 +228,8 @@ const initializeContactForm = () => {
   const validationState = Object.fromEntries(
     controls.map(({ field }) => [field.name, '']),
   );
+  const defaultSubmitLabel = submitButton.textContent;
+  let isSubmitting = false;
 
   const validateControl = (control) => {
     const errorMessage = getContactFieldError(control.field);
@@ -230,8 +239,19 @@ const initializeContactForm = () => {
   };
 
   const clearFormStatus = () => {
+    if (isSubmitting) {
+      return;
+    }
+
     formStatus.textContent = '';
     formStatus.dataset.state = '';
+  };
+
+  const setSubmitting = (submitting) => {
+    isSubmitting = submitting;
+    form.setAttribute('aria-busy', String(submitting));
+    submitButton.disabled = submitting;
+    submitButton.textContent = submitting ? '전송 중...' : defaultSubmitLabel;
   };
 
   controls.forEach((control) => {
@@ -241,8 +261,12 @@ const initializeContactForm = () => {
     });
   });
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     const isValid = controls.map(validateControl).every(Boolean);
 
@@ -253,14 +277,38 @@ const initializeContactForm = () => {
       return;
     }
 
-    formStatus.textContent = '메시지가 성공적으로 작성되었습니다.';
-    formStatus.dataset.state = 'success';
-    form.reset();
+    const formData = new FormData(form);
+    setSubmitting(true);
+    formStatus.textContent = '메시지를 전송하는 중입니다...';
+    formStatus.dataset.state = 'sending';
 
-    controls.forEach((control) => {
-      validationState[control.field.name] = '';
-      renderContactField(control, '');
-    });
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('form-submit-failed');
+      }
+
+      formStatus.textContent = '메시지가 성공적으로 전송되었습니다.';
+      formStatus.dataset.state = 'success';
+      form.reset();
+
+      controls.forEach((control) => {
+        validationState[control.field.name] = '';
+        renderContactField(control, '');
+      });
+    } catch {
+      formStatus.textContent = '메시지를 전송하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      formStatus.dataset.state = 'error';
+    } finally {
+      setSubmitting(false);
+    }
   });
 };
 
