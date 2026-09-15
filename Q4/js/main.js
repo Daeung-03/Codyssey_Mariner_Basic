@@ -53,6 +53,20 @@ const setMenuState = (menu, button, isOpen) => {
   button.setAttribute('aria-label', isOpen ? '메뉴 닫기' : '메뉴 열기');
 };
 
+const closeMenu = (menu, button) => {
+  menu.classList.remove('active');
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-label', '메뉴 열기');
+};
+
+const focusSection = (section) => {
+  section.setAttribute('tabindex', '-1');
+  section.focus({ preventScroll: true });
+  section.addEventListener('blur', () => {
+    section.removeAttribute('tabindex');
+  }, { once: true });
+};
+
 const initializeNavigation = () => {
   const menu = document.querySelector('#primary-navigation');
   const menuButton = document.querySelector('#menu-toggle');
@@ -67,15 +81,18 @@ const initializeNavigation = () => {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      setMenuState(menu, menuButton, false);
+    const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
+
+    if (event.key === 'Escape' && isOpen) {
+      closeMenu(menu, menuButton);
+      menuButton.focus();
     }
   });
 
   const desktopMediaQuery = window.matchMedia('(min-width: 768px)');
   desktopMediaQuery.addEventListener('change', ({ matches }) => {
     if (matches) {
-      setMenuState(menu, menuButton, false);
+      closeMenu(menu, menuButton);
     }
   });
 
@@ -91,11 +108,12 @@ const initializeNavigation = () => {
       }
 
       event.preventDefault();
-      setMenuState(menu, menuButton, false);
+      closeMenu(menu, menuButton);
       target.scrollIntoView({
         behavior: getPreferredScrollBehavior(),
         block: 'start',
       });
+      focusSection(target);
       window.history.pushState(null, '', targetSelector);
     });
   });
@@ -266,6 +284,15 @@ const escapeHTML = (value) => String(value).replace(
   (character) => HTML_ESCAPE_CHARACTERS[character],
 );
 
+const getSafeGitHubUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'github.com' ? url.href : '';
+  } catch {
+    return '';
+  }
+};
+
 const renderProjectCard = ({
   name,
   description,
@@ -273,22 +300,29 @@ const renderProjectCard = ({
   language,
   stargazers_count: stars,
   forks_count: forks,
-}) => `
-  <article class="project-card">
-    <h3>${escapeHTML(name)}</h3>
-    <p class="project-card__description">
-      ${escapeHTML(description || '저장소 설명이 없습니다.')}
-    </p>
-    <ul class="project-card__meta" aria-label="저장소 정보">
-      <li>${escapeHTML(language || '기타')}</li>
-      <li>Stars ${escapeHTML(stars)}</li>
-      <li>Forks ${escapeHTML(forks)}</li>
-    </ul>
-    <a href="${escapeHTML(repositoryUrl)}" target="_blank" rel="noopener noreferrer">
-      GitHub에서 보기
-    </a>
-  </article>
-`;
+}) => {
+  const safeRepositoryUrl = getSafeGitHubUrl(repositoryUrl);
+  const repositoryLink = safeRepositoryUrl
+    ? `<a href="${escapeHTML(safeRepositoryUrl)}" target="_blank" rel="noopener noreferrer">
+        GitHub에서 보기
+      </a>`
+    : '<span class="project-card__unavailable">저장소 링크 없음</span>';
+
+  return `
+    <article class="project-card">
+      <h3>${escapeHTML(name)}</h3>
+      <p class="project-card__description">
+        ${escapeHTML(description || '저장소 설명이 없습니다.')}
+      </p>
+      <ul class="project-card__meta" aria-label="저장소 정보">
+        <li>${escapeHTML(language || '기타')}</li>
+        <li>Stars ${escapeHTML(stars)}</li>
+        <li>Forks ${escapeHTML(forks)}</li>
+      </ul>
+      ${repositoryLink}
+    </article>
+  `;
+};
 
 const renderProjects = (container, state) => {
   if (state.status === PROJECT_STATUS.LOADING) {
