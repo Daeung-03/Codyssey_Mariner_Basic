@@ -429,6 +429,12 @@ section h2 {
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
+.form-field input.invalid,
+.form-field textarea.invalid {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-error) 18%, transparent);
+}
+
 .form-error {
   min-height: 1.4em;
   color: var(--color-error);
@@ -438,8 +444,15 @@ section h2 {
 #form-status {
   min-height: 1.7em;
   margin-bottom: 0;
-  color: var(--color-success);
   font-weight: 700;
+}
+
+#form-status[data-state="error"] {
+  color: var(--color-error);
+}
+
+#form-status[data-state="success"] {
+  color: var(--color-success);
 }
 
 #contact-form button[type="submit"] {

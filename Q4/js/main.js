@@ -155,11 +155,103 @@ const initializeScrollAnimations = () => {
   });
 };
 
+const REQUIRED_FIELD_MESSAGES = Object.freeze({
+  name: '이름을 입력해 주세요.',
+  email: '이메일을 입력해 주세요.',
+  message: '메시지를 입력해 주세요.',
+});
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getContactFieldError = ({ name, type, value }) => {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return REQUIRED_FIELD_MESSAGES[name] ?? '필수 항목을 입력해 주세요.';
+  }
+
+  if (type === 'email' && !EMAIL_PATTERN.test(normalizedValue)) {
+    return '올바른 이메일 형식을 입력해 주세요.';
+  }
+
+  return '';
+};
+
+const renderContactField = ({ field, errorElement }, errorMessage) => {
+  const hasError = Boolean(errorMessage);
+
+  field.classList.toggle('invalid', hasError);
+  field.setAttribute('aria-invalid', String(hasError));
+  errorElement.textContent = errorMessage;
+};
+
+const initializeContactForm = () => {
+  const form = document.querySelector('#contact-form');
+  const formStatus = document.querySelector('#form-status');
+
+  if (!form || !formStatus) {
+    return;
+  }
+
+  const controls = [...form.querySelectorAll('input, textarea')]
+    .map((field) => ({
+      field,
+      errorElement: document.querySelector(`#${field.id}-error`),
+    }))
+    .filter(({ errorElement }) => errorElement);
+
+  const validationState = Object.fromEntries(
+    controls.map(({ field }) => [field.name, '']),
+  );
+
+  const validateControl = (control) => {
+    const errorMessage = getContactFieldError(control.field);
+    validationState[control.field.name] = errorMessage;
+    renderContactField(control, errorMessage);
+    return !errorMessage;
+  };
+
+  const clearFormStatus = () => {
+    formStatus.textContent = '';
+    formStatus.dataset.state = '';
+  };
+
+  controls.forEach((control) => {
+    control.field.addEventListener('input', () => {
+      validateControl(control);
+      clearFormStatus();
+    });
+  });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const isValid = controls.map(validateControl).every(Boolean);
+
+    if (!isValid) {
+      formStatus.textContent = '입력 내용을 다시 확인해 주세요.';
+      formStatus.dataset.state = 'error';
+      controls.find(({ field }) => field.getAttribute('aria-invalid') === 'true')?.field.focus();
+      return;
+    }
+
+    formStatus.textContent = '메시지가 성공적으로 작성되었습니다.';
+    formStatus.dataset.state = 'success';
+    form.reset();
+
+    controls.forEach((control) => {
+      validationState[control.field.name] = '';
+      renderContactField(control, '');
+    });
+  });
+};
+
 const initializeApp = () => {
   initializeTheme();
   initializeNavigation();
   initializeScrollUI();
   initializeScrollAnimations();
+  initializeContactForm();
   console.log('Q4 portfolio initialized.', CONFIG);
 };
 
