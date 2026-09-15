@@ -1,3 +1,48 @@
+const THEME_STORAGE_KEY = 'portfolio-theme';
+
+const getStoredTheme = () => {
+  try {
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return storedTheme === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+};
+
+const storeTheme = (theme) => {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // 저장소 접근이 제한되어도 현재 페이지의 테마 전환은 유지한다.
+  }
+};
+
+const renderTheme = (theme, button) => {
+  const isDark = theme === 'dark';
+
+  document.documentElement.dataset.theme = theme;
+  button.textContent = isDark ? 'Light' : 'Dark';
+  button.setAttribute('aria-pressed', String(isDark));
+  button.setAttribute('aria-label', isDark ? '라이트 모드로 전환' : '다크 모드로 전환');
+};
+
+const initializeTheme = () => {
+  const themeButton = document.querySelector('#theme-toggle');
+
+  if (!themeButton) {
+    return;
+  }
+
+  let currentTheme = getStoredTheme();
+  renderTheme(currentTheme, themeButton);
+
+  themeButton.addEventListener('click', () => {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    storeTheme(currentTheme);
+    renderTheme(currentTheme, themeButton);
+  });
+};
+
 const setMenuState = (menu, button, isOpen) => {
   menu.classList.toggle('active', isOpen);
   button.setAttribute('aria-expanded', String(isOpen));
@@ -54,6 +99,7 @@ const initializeNavigation = () => {
 };
 
 const initializeApp = () => {
+  initializeTheme();
   initializeNavigation();
   console.log('Q4 portfolio initialized.', CONFIG);
 };
