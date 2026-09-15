@@ -4,13 +4,22 @@ const getPreferredScrollBehavior = () => (
   window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 );
 
+const getSystemTheme = () => (
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+);
+
 const getStoredTheme = () => {
   try {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    return storedTheme === 'dark' ? 'dark' : 'light';
+
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      return storedTheme;
+    }
   } catch {
-    return 'light';
+    // 저장소 접근이 제한되면 시스템 테마를 초기값으로 사용한다.
   }
+
+  return getSystemTheme();
 };
 
 const storeTheme = (theme) => {
@@ -372,6 +381,38 @@ const renderProjectCard = ({
   `;
 };
 
+const ALL_LANGUAGES = 'all';
+
+const getProjectLanguage = ({ language }) => language || '기타';
+
+const renderProjectFilters = (container, state) => {
+  if (state.status !== PROJECT_STATUS.SUCCESS) {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+
+  const languages = [...new Set(state.projects.map(getProjectLanguage))]
+    .sort((first, second) => first.localeCompare(second));
+  const filterOptions = [ALL_LANGUAGES, ...languages];
+
+  container.hidden = false;
+  container.innerHTML = filterOptions.map((language) => {
+    const isSelected = state.selectedLanguage === language;
+    const label = language === ALL_LANGUAGES ? '전체' : language;
+
+    return `
+      <button
+        type="button"
+        data-language="${encodeURIComponent(language)}"
+        aria-pressed="${String(isSelected)}"
+      >
+        ${escapeHTML(label)}
+      </button>
+    `;
+  }).join('');
+};
+
 const renderProjects = (container, state) => {
   if (state.status === PROJECT_STATUS.LOADING) {
     container.innerHTML = `
@@ -402,13 +443,29 @@ const renderProjects = (container, state) => {
     return;
   }
 
-  container.innerHTML = state.projects.map(renderProjectCard).join('');
+  const visibleProjects = state.selectedLanguage === ALL_LANGUAGES
+    ? state.projects
+    : state.projects.filter(
+      (project) => getProjectLanguage(project) === state.selectedLanguage,
+    );
+
+  if (visibleProjects.length === 0) {
+    container.innerHTML = `
+      <div class="projects-status" role="status">
+        <p>선택한 언어의 프로젝트가 없습니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = visibleProjects.map(renderProjectCard).join('');
 };
 
 const initializeProjects = () => {
   const projectsContainer = document.querySelector('#projects-content');
+  const filtersContainer = document.querySelector('#project-filters');
 
-  if (!projectsContainer) {
+  if (!projectsContainer || !filtersContainer) {
     return;
   }
 
@@ -416,12 +473,19 @@ const initializeProjects = () => {
     status: PROJECT_STATUS.LOADING,
     projects: [],
     errorMessage: '',
+    selectedLanguage: ALL_LANGUAGES,
+  };
+
+  const renderProjectUI = () => {
+    renderProjectFilters(filtersContainer, projectsState);
+    renderProjects(projectsContainer, projectsState);
   };
 
   const loadProjects = async () => {
     projectsState.status = PROJECT_STATUS.LOADING;
     projectsState.errorMessage = '';
-    renderProjects(projectsContainer, projectsState);
+    projectsState.selectedLanguage = ALL_LANGUAGES;
+    renderProjectUI();
 
     try {
       const username = CONFIG.githubUsername.trim();
@@ -455,7 +519,7 @@ const initializeProjects = () => {
         : '프로젝트를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.';
     }
 
-    renderProjects(projectsContainer, projectsState);
+    renderProjectUI();
   };
 
   projectsContainer.addEventListener('click', (event) => {
@@ -466,7 +530,54 @@ const initializeProjects = () => {
     }
   });
 
+  filtersContainer.addEventListener('click', (event) => {
+    const filterButton = event.target.closest('[data-language]');
+
+    if (!filterButton) {
+      return;
+    }
+
+    const selectedLanguage = decodeURIComponent(filterButton.dataset.language);
+    const isAvailable = selectedLanguage === ALL_LANGUAGES
+      || projectsState.projects.some(
+        (project) => getProjectLanguage(project) === selectedLanguage,
+      );
+
+    if (!isAvailable) {
+      return;
+    }
+
+    projectsState.selectedLanguage = selectedLanguage;
+    renderProjectUI();
+  });
+
   loadProjects();
+};
+
+const initializeTypingEffect = () => {
+  const heroTitle = document.querySelector('#hero-title');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!heroTitle || prefersReducedMotion) {
+    return;
+  }
+
+  const fullText = heroTitle.textContent.trim();
+  let characterIndex = 0;
+
+  heroTitle.textContent = '';
+  heroTitle.setAttribute('aria-label', fullText);
+  heroTitle.classList.add('typing');
+
+  const typingTimer = window.setInterval(() => {
+    characterIndex += 1;
+    heroTitle.textContent = fullText.slice(0, characterIndex);
+
+    if (characterIndex >= fullText.length) {
+      window.clearInterval(typingTimer);
+      heroTitle.classList.remove('typing');
+    }
+  }, 65);
 };
 
 const initializeApp = () => {
@@ -476,6 +587,7 @@ const initializeApp = () => {
   initializeScrollAnimations();
   initializeContactForm();
   initializeProjects();
+  initializeTypingEffect();
   console.log('Q4 portfolio initialized.', CONFIG);
 };
 
